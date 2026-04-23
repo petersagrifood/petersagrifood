@@ -1,6 +1,6 @@
 {
   "name": "Sagrifood HRM",
   "description": "A comprehensive Human Resource Management system for Sagrifood Group, featuring employee tracking, attendance, scheduling, and reporting.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["camera"],
   "majorCapabilities": []
 }

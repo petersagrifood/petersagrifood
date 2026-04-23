@@ -13,7 +13,10 @@ import {
   ChevronRight,
   LocateFixed,
   Plus,
-  Scale
+  Scale,
+  Camera,
+  X,
+  CameraOff
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 
@@ -21,6 +24,42 @@ type MobileTab = 'home' | 'attendance' | 'schedule' | 'profile';
 
 export default function MobileApp() {
   const [tab, setTab] = useState<MobileTab>('attendance');
+  const [showCamera, setShowCamera] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setShowCamera(true);
+    } catch (err) {
+      console.error("Error accessing camera:", err);
+      alert("Không thể truy cập camera. Vui lòng cấp quyền.");
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setShowCamera(false);
+  };
+
+  const takePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
+      const dataUrl = canvas.toDataURL('image/jpeg');
+      setCapturedImage(dataUrl);
+      stopCamera();
+    }
+  };
 
   return (
     <div className="mx-auto max-w-md min-h-screen bg-slate-50 flex flex-col shadow-2xl relative overflow-hidden ring-1 ring-slate-200">
@@ -109,15 +148,83 @@ export default function MobileApp() {
         </div>
 
         <div className="px-4 mt-8 flex flex-col gap-4">
-          <button className="w-full h-16 bg-green-600 text-white rounded-2xl shadow-lg shadow-green-200 flex items-center justify-center gap-3 active:translate-y-0.5 active:shadow-sm transition-all overflow-hidden group">
+          {!capturedImage ? (
+            <button 
+              onClick={startCamera}
+              className="w-full h-16 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-200 flex items-center justify-center gap-3 active:translate-y-0.5 active:shadow-sm transition-all overflow-hidden group"
+            >
+              <Camera className="h-8 w-8 transition-transform group-active:scale-125" />
+              <span className="text-lg font-black uppercase tracking-widest">Chụp Ảnh Xác Thực</span>
+            </button>
+          ) : (
+            <div className="relative w-full aspect-square max-w-[200px] mx-auto rounded-2xl border-4 border-white shadow-xl overflow-hidden group">
+              <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
+              <button 
+                onClick={() => setCapturedImage(null)}
+                className="absolute top-2 right-2 h-8 w-8 bg-black/50 text-white rounded-full flex items-center justify-center backdrop-blur-sm"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+
+          <button 
+            disabled={!capturedImage}
+            className={cn(
+              "w-full h-16 rounded-2xl shadow-lg flex items-center justify-center gap-3 active:translate-y-0.5 active:shadow-sm transition-all overflow-hidden group",
+              capturedImage ? "bg-green-600 text-white shadow-green-200" : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+            )}
+          >
             <Fingerprint className="h-8 w-8 transition-transform group-active:scale-125" />
             <span className="text-lg font-black uppercase tracking-widest">Chấm Công Vào</span>
           </button>
+          
           <button className="w-full h-14 bg-white border-2 border-green-600 text-green-600 rounded-2xl flex items-center justify-center gap-2 active:bg-green-50 transition-colors font-bold">
             <History className="h-5 w-5" />
             Xem Lịch Sử Chấm Công
           </button>
         </div>
+
+        {showCamera && (
+          <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6">
+            <div className="relative w-full aspect-[3/4] max-w-sm bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-2 border-white/20">
+              <video 
+                ref={videoRef}
+                autoPlay 
+                playsInline
+                className="w-full h-full object-cover scale-x-[-1]"
+              />
+              <div className="absolute inset-x-0 top-0 p-6 flex justify-between items-start pointer-events-none">
+                <div className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></div>
+                  Camera Xác Thực
+                </div>
+                <button 
+                  onClick={stopCamera}
+                  className="h-10 w-10 bg-white/10 backdrop-blur-md text-white rounded-full flex items-center justify-center pointer-events-auto active:scale-90 transition-transform"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-64 h-80 border-2 border-dashed border-white/30 rounded-[60px] relative">
+                  <div className="absolute inset-x-0 bottom-8 text-center text-white/50 text-xs font-medium px-4">
+                    Vui lòng đưa khuôn mặt vào giữa khung hình
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <button 
+              onClick={takePhoto}
+              className="mt-12 h-20 w-20 bg-white rounded-full flex items-center justify-center shadow-2xl active:scale-90 transition-transform border-[6px] border-white/20"
+            >
+              <div className="h-14 w-14 bg-green-600 rounded-full flex items-center justify-center text-white">
+                <Camera className="h-8 w-8" />
+              </div>
+            </button>
+          </div>
+        )}
 
         <div className="px-4 mt-8 mb-8">
           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-1">Thông tin phiên làm việc</h3>

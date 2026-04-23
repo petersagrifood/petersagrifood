@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account and profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "manager", "employee"] },
+        "employeeId": { "type": "string" },
+        "department": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Attendance": {
+      "title": "Attendance Record",
+      "description": "Daily clock-in and clock-out logs",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["check-in", "check-out"] },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" },
+            "address": { "type": "string" }
+          }
+        },
+        "photoURL": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "verified", "flagged"] }
+      }
+    },
+    "Request": {
+      "title": "HR Request",
+      "description": "Leave, overtime, or other HR requests",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "type": { "type": "string", "enum": ["leave", "overtime", "late", "other"] },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "processedBy": { "type": "string" },
+        "processedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Config": {
+      "title": "System Config",
+      "description": "Global settings for the HRM system",
+      "type": "object",
+      "properties": {
+        "gpsRadius": { "type": "number" },
+        "workStartTime": { "type": "string" },
+        "workEndTime": { "type": "string" },
+        "companyName": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Individual user profiles"
+    },
+    "attendance/{recordId}": {
+      "schema": "Attendance",
+      "description": "Global stream of attendance records"
+    },
+    "requests/{requestId}": {
+      "schema": "Request",
+      "description": "Employee requests for approval"
+    },
+    "config/system": {
+      "schema": "Config",
+      "description": "Singleton configuration document"
+    }
+  }
+}

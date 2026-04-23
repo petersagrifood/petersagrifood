@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import TopNav from './components/TopNav';
 import Dashboard from './views/Dashboard';
@@ -6,12 +6,40 @@ import EmployeeList from './views/EmployeeList';
 import Attendance from './views/Attendance';
 import Reports from './views/Reports';
 import MobileApp from './views/MobileApp';
-import { Smartphone, Monitor } from 'lucide-react';
+import Login from './views/Login';
+import Approvals from './views/Approvals';
+import Settings from './views/Settings';
+import { Smartphone, Monitor, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { auth } from './lib/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
+        <Loader2 className="h-10 w-10 text-green-600 animate-spin" />
+        <p className="text-slate-500 font-bold animate-pulse uppercase tracking-widest text-xs">Đang tải Sagrifood HRM...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
 
   if (viewMode === 'mobile') {
     return (
@@ -51,7 +79,9 @@ export default function App() {
               {activeTab === 'employees' && <EmployeeList />}
               {activeTab === 'attendance' && <Attendance />}
               {activeTab === 'reports' && <Reports />}
-              {['payroll', 'settings'].includes(activeTab) && (
+              {activeTab === 'approvals' && <Approvals />}
+              {activeTab === 'settings' && <Settings />}
+              {['payroll'].includes(activeTab) && (
                 <div className="flex flex-col items-center justify-center h-[calc(100vh-64px)] text-slate-400 gap-4">
                   <div className="p-8 rounded-full bg-slate-100">
                     <Monitor className="h-12 w-12" />
