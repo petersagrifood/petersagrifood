@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Users, 
   Briefcase, 
@@ -12,7 +12,11 @@ import {
   Verified,
   Zap,
   Map as MapIcon,
-  Navigation
+  Navigation,
+  Sparkles,
+  Loader2,
+  FileText,
+  Volume2
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -24,8 +28,11 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
+import { analyzeHRData } from '@/src/services/aiService';
+import ChatBot from '@/src/components/ChatBot';
+import Markdown from 'react-markdown';
 
 const stats = [
   { label: 'Tổng nhân sự', value: '1,248', icon: Users, color: 'text-green-600', bg: 'bg-green-50', trend: '+12%', trendColor: 'text-green-600' },
@@ -51,12 +58,86 @@ const requests = [
 ];
 
 export default function Dashboard() {
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiInsight, setAiInsight] = useState<string | null>(null);
+
+  const runAIAnalysis = async () => {
+    setAnalyzing(true);
+    // Mock data for demo, in real app we'd fetch from Firestore
+    const data = {
+      attendance: chartData,
+      pendingRequests: 24,
+      violations: 8
+    };
+    try {
+      const result = await analyzeHRData(data);
+      setAiInsight(result);
+    } catch (error) {
+      setAiInsight("Lỗi phân tích dữ liệu.");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   return (
-    <div className="space-y-8 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="font-sans text-3xl font-bold tracking-tight text-slate-900">Dashboard Tổng Quan</h1>
-        <p className="text-sm font-medium text-slate-500">Chào buổi sáng, An. Đây là tình hình nhân sự hôm nay tại các trạm Sagrifood.</p>
+    <div className="space-y-8 p-8 relative">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-sans text-3xl font-bold tracking-tight text-slate-900">Dashboard Tổng Quan</h1>
+          <p className="text-sm font-medium text-slate-500">Chào buổi sáng, An. Đây là tình hình nhân sự hôm nay tại các trạm Sagrifood.</p>
+        </div>
+        
+        <button 
+          onClick={runAIAnalysis}
+          disabled={analyzing}
+          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-bold text-sm shadow-xl shadow-indigo-100 hover:scale-105 transition-all group overflow-hidden relative"
+        >
+          {analyzing && <Loader2 className="h-4 w-4 animate-spin text-white/50" />}
+          {!analyzing && (
+            <Sparkles className="h-4 w-4 text-amber-300 group-hover:rotate-12 transition-transform" />
+          )}
+          <span className="relative z-10">Phân tích AI Gemini</span>
+          <div className="absolute inset-0 bg-white/10 translate-y-full hover:translate-y-0 transition-transform"></div>
+        </button>
       </div>
+
+      <AnimatePresence>
+        {aiInsight && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-[2rem] p-8 shadow-inner">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white rounded-xl shadow-sm text-indigo-600">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-black text-indigo-900 uppercase tracking-widest text-xs">Phân tích chiến lược từ AI</h3>
+                </div>
+                <button 
+                  onClick={() => setAiInsight(null)}
+                  className="text-indigo-400 hover:text-indigo-600 text-xs font-bold"
+                >
+                  Đóng
+                </button>
+              </div>
+              <div className="prose prose-sm prose-indigo max-w-none text-indigo-800/80 font-medium leading-relaxed">
+                <Markdown>{aiInsight}</Markdown>
+              </div>
+              <div className="mt-8 pt-6 border-t border-indigo-100 flex items-center justify-between">
+                <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Cập nhật: {new Date().toLocaleTimeString()}</p>
+                <div className="flex gap-2">
+                  <button className="px-4 py-2 bg-white text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 transition-colors shadow-sm">Xuất báo cáo</button>
+                  <button className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100">Chi tiết vi phạm</button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, idx) => (
@@ -190,6 +271,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      <ChatBot />
     </div>
   );
 }

@@ -30,7 +30,12 @@ export default function TopNav() {
         </div>
         <div className="mx-2 h-6 w-px bg-slate-200"></div>
         <div className="flex items-center gap-3 pl-2">
-          <span className="text-xl font-bold tracking-tight text-green-600">Sagrifood HRM</span>
+          <img 
+            src="https://sagrifood.com.vn/wp-content/uploads/2018/06/logo-sagrifood.png" 
+            alt="Logo" 
+            className="h-10 w-auto object-contain"
+          />
+          <span className="text-xl font-black tracking-tight text-green-700 border-l border-slate-200 pl-3">HRM</span>
         </div>
       </div>
     </header>

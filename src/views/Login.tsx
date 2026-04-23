@@ -36,13 +36,17 @@ export default function Login() {
         className="max-w-md w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-slate-100"
       >
         <div className="p-8 pb-0 flex flex-col items-center">
-          <div className="h-20 w-20 bg-green-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-green-200 rotate-12 mb-8">
-            <Leaf className="h-10 w-10 text-white -rotate-12" />
+          <div className="mb-6">
+            <img 
+              src="https://sagrifood.com.vn/wp-content/uploads/2018/06/logo-sagrifood.png" 
+              alt="Sagrifood Logo" 
+              className="h-32 w-auto object-contain drop-shadow-sm"
+            />
           </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight text-center">
-            SAGRIFOOD <span className="text-green-600">HRM</span>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight text-center">
+            HỆ THỐNG <span className="text-green-600">HRM</span>
           </h1>
-          <p className="text-slate-500 text-center mt-3 font-medium">Hệ thống quản trị nhân sự tập trung</p>
+          <p className="text-slate-500 text-center mt-2 font-medium">Quản trị nhân sự thực phẩm sạch</p>
         </div>
 
         <div className="p-10 pt-12">

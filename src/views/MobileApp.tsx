@@ -66,7 +66,12 @@ export default function MobileApp() {
       <header className="fixed top-0 w-full max-w-md z-50 bg-green-600 text-white shadow-md flex items-center justify-between px-4 h-16">
         <div className="flex items-center gap-3">
           <Menu className="h-6 w-6 cursor-pointer" />
-          <h1 className="font-sans text-lg font-bold tracking-tight">Chấm Công GPS</h1>
+          <img 
+            src="https://sagrifood.com.vn/wp-content/uploads/2018/06/logo-sagrifood.png" 
+            alt="Logo" 
+            className="h-10 w-auto brightness-0 invert"
+          />
+          <h1 className="font-sans text-base font-bold tracking-tight border-l border-white/20 pl-2">HRM</h1>
         </div>
         <div className="h-10 w-10 rounded-full border-2 border-white/20 overflow-hidden">
           <img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=100" alt="Avatar" className="h-full w-full object-cover" />

@@ -9,7 +9,8 @@ import {
   Plus,
   Leaf,
   CheckCircle,
-  LogOut
+  LogOut,
+  ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { auth } from '@/src/lib/firebase';
@@ -26,6 +27,7 @@ const menuItems = [
   { id: 'attendance', label: 'Chấm công', icon: CalendarDays },
   { id: 'approvals', label: 'Phê duyệt', icon: CheckCircle },
   { id: 'payroll', label: 'Bảng lương', icon: Banknote },
+  { id: 'compliance', label: 'Tuân thủ', icon: ShieldCheck },
   { id: 'reports', label: 'Báo cáo', icon: BarChart3 },
   { id: 'settings', label: 'Cấu hình', icon: Settings },
 ];
@@ -34,12 +36,14 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   return (
     <aside className="fixed left-0 top-0 hidden h-screen w-64 flex-col border-r border-slate-200 bg-slate-50 py-4 lg:flex z-50">
       <div className="mb-8 flex items-center gap-3 px-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-600 text-white shadow-sm shadow-green-200">
-          <Leaf className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="text-lg font-black leading-tight text-green-700">Quản trị HRM</h1>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Sagrifood Group</p>
+        <img 
+          src="https://sagrifood.com.vn/wp-content/uploads/2018/06/logo-sagrifood.png" 
+          alt="Sagrifood Logo" 
+          className="h-12 w-auto object-contain"
+        />
+        <div className="border-l border-slate-200 pl-3">
+          <h1 className="text-sm font-black leading-tight text-green-700">Quản trị HRM</h1>
+          <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Hệ thống Tổng hợp</p>
         </div>
       </div>
 

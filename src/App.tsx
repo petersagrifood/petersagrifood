@@ -9,6 +9,8 @@ import MobileApp from './views/MobileApp';
 import Login from './views/Login';
 import Approvals from './views/Approvals';
 import Settings from './views/Settings';
+import Payroll from './views/Payroll';
+import Compliance from './views/Compliance';
 import { Smartphone, Monitor, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth } from './lib/firebase';
@@ -81,7 +83,9 @@ export default function App() {
               {activeTab === 'reports' && <Reports />}
               {activeTab === 'approvals' && <Approvals />}
               {activeTab === 'settings' && <Settings />}
-              {['payroll'].includes(activeTab) && (
+              {activeTab === 'payroll' && <Payroll />}
+              {activeTab === 'compliance' && <Compliance />}
+              {['other'].includes(activeTab) && (
                 <div className="flex flex-col items-center justify-center h-[calc(100vh-64px)] text-slate-400 gap-4">
                   <div className="p-8 rounded-full bg-slate-100">
                     <Monitor className="h-12 w-12" />
