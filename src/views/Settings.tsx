@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building2, 
   MapPin, 
@@ -7,13 +7,56 @@ import {
   Save,
   RefreshCw,
   Bell,
-  Cpu
+  Cpu,
+  UserCheck,
+  CheckCircle2
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
+import { auth } from '@/src/lib/firebase';
+import { getUserProfile, updateUserRole } from '@/src/services/dbService';
 
-export default function Settings() {
+const ROLL_OPTIONS = [
+  { id: 'nhan_vien', label: 'Nhân viên', desc: 'Chỉ truy cập Mobile App' },
+  { id: 'to_truong', label: 'Tổ trưởng', desc: 'Dashboard & Chấm công' },
+  { id: 'phong_kinh_doanh', label: 'P. Kinh doanh', desc: 'Dashboard, Reports & Approvals' },
+  { id: 'phong_tchc', label: 'P. Tổ chức Hành chính', desc: 'Toàn quyền quản trị nhân sự' },
+  { id: 'giam_doc', label: 'Giám đốc', desc: 'Toàn quyền hệ thống' },
+];
+
+interface SettingsProps {
+  userProfile?: any;
+}
+
+export default function Settings({ userProfile: initialProfile }: SettingsProps) {
   const [loading, setLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(initialProfile || null);
+  const [updatingRole, setUpdatingRole] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (auth.currentUser) {
+        const profile = await getUserProfile(auth.currentUser.uid);
+        setUserProfile(profile);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleRoleChange = async (role: string) => {
+    if (!auth.currentUser) return;
+    setUpdatingRole(true);
+    try {
+      await updateUserRole(auth.currentUser.uid, role);
+      setUserProfile((prev: any) => ({ ...prev, role }));
+      // Reload page to apply changes
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setUpdatingRole(false);
+    }
+  };
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -23,6 +66,55 @@ export default function Settings() {
       </div>
 
       <div className="space-y-6">
+        {/* Role Simulator Section */}
+        <section className="bg-gradient-to-br from-green-900 to-green-950 border border-green-800 rounded-[2.5rem] overflow-hidden shadow-2xl p-8 mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <UserCheck className="h-6 w-6 text-green-400" />
+            <h2 className="text-xl font-black italic uppercase text-white tracking-tight">Mô phỏng Phân quyền (Demo)</h2>
+          </div>
+          <p className="text-green-300/80 text-sm italic font-medium mb-8">
+            Sagrifood HRM hỗ trợ phân quyền đa cấp. Chọn một vai trò bên dưới để kiểm tra giao diện phù hợp. 
+            (Sau khi chọn, hệ thống sẽ tự động tải lại để áp dụng cấu hình).
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {ROLL_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => handleRoleChange(option.id)}
+                disabled={updatingRole}
+                className={cn(
+                  "relative p-5 rounded-3xl text-left transition-all border-2 group",
+                  userProfile?.role === option.id 
+                    ? "bg-white border-green-400 shadow-xl shadow-green-900/20" 
+                    : "bg-white/5 border-white/10 hover:bg-white/10"
+                )}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className={cn(
+                    "text-sm font-black italic uppercase italic tracking-tight",
+                    userProfile?.role === option.id ? "text-green-900" : "text-white"
+                  )}>
+                    {option.label}
+                  </span>
+                  {userProfile?.role === option.id && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                </div>
+                <p className={cn(
+                  "text-[10px] font-bold italic",
+                  userProfile?.role === option.id ? "text-green-700/60" : "text-white/40"
+                )}>
+                  {option.desc}
+                </p>
+                {updatingRole && userProfile?.role === option.id && (
+                  <div className="absolute inset-0 bg-white/50 backdrop-blur-sm rounded-3xl flex items-center justify-center">
+                    <RefreshCw className="h-5 w-5 animate-spin text-green-900" />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </section>
+
         <section className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
             <MapPin className="h-5 w-5 text-green-600" />

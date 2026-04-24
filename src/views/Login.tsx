@@ -38,9 +38,10 @@ export default function Login() {
         <div className="p-8 pb-0 flex flex-col items-center">
           <div className="mb-6">
             <img 
-              src="https://sagrifood.com.vn/wp-content/uploads/2018/06/logo-sagrifood.png" 
+              src="https://www.sagrifood.com.vn/wp-content/uploads/2018/06/logo-sagrifood.png" 
               alt="Sagrifood Logo" 
               className="h-32 w-auto object-contain drop-shadow-sm"
+              referrerPolicy="no-referrer"
             />
           </div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight text-center">

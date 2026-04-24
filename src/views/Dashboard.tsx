@@ -33,6 +33,7 @@ import { cn } from '@/src/lib/utils';
 import { analyzeHRData } from '@/src/services/aiService';
 import ChatBot from '@/src/components/ChatBot';
 import Markdown from 'react-markdown';
+import { Tooltip as CustomTooltip } from '@/src/components/ui/Tooltip';
 
 const stats = [
   { label: 'Tổng nhân sự', value: '1,248', icon: Users, color: 'text-green-600', bg: 'bg-green-50', trend: '+12%', trendColor: 'text-green-600' },
@@ -57,7 +58,11 @@ const requests = [
   { name: 'Trần Thu Hà', type: 'Đổi ca', time: '8 giờ trước', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=100' },
 ];
 
-export default function Dashboard() {
+interface DashboardProps {
+  userProfile?: any;
+}
+
+export default function Dashboard({ userProfile }: DashboardProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
 
@@ -87,18 +92,20 @@ export default function Dashboard() {
           <p className="text-sm font-medium text-slate-500">Chào buổi sáng, An. Đây là tình hình nhân sự hôm nay tại các trạm Sagrifood.</p>
         </div>
         
-        <button 
-          onClick={runAIAnalysis}
-          disabled={analyzing}
-          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-bold text-sm shadow-xl shadow-indigo-100 hover:scale-105 transition-all group overflow-hidden relative"
-        >
-          {analyzing && <Loader2 className="h-4 w-4 animate-spin text-white/50" />}
-          {!analyzing && (
-            <Sparkles className="h-4 w-4 text-amber-300 group-hover:rotate-12 transition-transform" />
-          )}
-          <span className="relative z-10">Phân tích AI Gemini</span>
-          <div className="absolute inset-0 bg-white/10 translate-y-full hover:translate-y-0 transition-transform"></div>
-        </button>
+        <CustomTooltip content="Click to run AI HR strategy analysis" position="bottom">
+          <button 
+            onClick={runAIAnalysis}
+            disabled={analyzing}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-bold text-sm shadow-xl shadow-indigo-100 hover:scale-105 transition-all group overflow-hidden relative"
+          >
+            {analyzing && <Loader2 className="h-4 w-4 animate-spin text-white/50" />}
+            {!analyzing && (
+              <Sparkles className="h-4 w-4 text-amber-300 group-hover:rotate-12 transition-transform" />
+            )}
+            <span className="relative z-10">Phân tích AI Gemini</span>
+            <div className="absolute inset-0 bg-white/10 translate-y-full hover:translate-y-0 transition-transform"></div>
+          </button>
+        </CustomTooltip>
       </div>
 
       <AnimatePresence>
@@ -141,27 +148,28 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, idx) => (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            key={stat.label} 
-            className="flex flex-col gap-4 rounded-xl border border-slate-100 bg-white p-6 shadow-[0px_4px_12px_rgba(0,0,0,0.05)]"
-          >
-            <div className="flex items-start justify-between">
-              <div className={`rounded-lg ${stat.bg} p-3`}>
-                <stat.icon className={`h-6 w-6 ${stat.color}`} />
+          <CustomTooltip key={stat.label} content={`Xem chi tiết ${stat.label.toLowerCase()}`} position="top" className="w-full">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
+              className="flex w-full flex-col gap-4 rounded-xl border border-slate-100 bg-white p-6 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] cursor-pointer"
+            >
+              <div className="flex items-start justify-between">
+                <div className={`rounded-lg ${stat.bg} p-3`}>
+                  <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                </div>
+                <span className={`text-xs font-bold ${stat.trendColor} rounded-full px-2 py-1`}>
+                  {stat.label === 'Đang làm việc' ? <span className="mr-1 inline-block h-2 w-2 rounded-full bg-green-500"></span> : null}
+                  {stat.trend}
+                </span>
               </div>
-              <span className={`text-xs font-bold ${stat.trendColor} rounded-full px-2 py-1`}>
-                {stat.label === 'Đang làm việc' ? <span className="mr-1 inline-block h-2 w-2 rounded-full bg-green-500"></span> : null}
-                {stat.trend}
-              </span>
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{stat.label}</p>
-              <p className="mt-1 text-3xl font-black text-slate-900">{stat.value}</p>
-            </div>
-          </motion.div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{stat.label}</p>
+                <p className="mt-1 text-3xl font-black text-slate-900">{stat.value}</p>
+              </div>
+            </motion.div>
+          </CustomTooltip>
         ))}
       </div>
 

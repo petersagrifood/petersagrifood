@@ -30,7 +30,11 @@ const mockPayroll = [
   { id: '4', name: 'Nguyễn Thị Hoa', role: 'Kế toán', baseSalary: 11000000, allowance: 1000000, deductions: 300000, net: 11700000, status: 'pending' },
 ];
 
-export default function Payroll() {
+interface PayrollProps {
+  userProfile?: any;
+}
+
+export default function Payroll({ userProfile }: PayrollProps) {
   const [loading, setLoading] = useState(false);
 
   const exportExcel = () => {

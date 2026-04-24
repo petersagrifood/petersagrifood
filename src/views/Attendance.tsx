@@ -73,7 +73,11 @@ const summaryStats = [
   { label: 'Tổng Ca Đêm', value: 42, icon: Moon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
 ];
 
-export default function Attendance() {
+interface AttendanceProps {
+  userProfile?: any;
+}
+
+export default function Attendance({ userProfile }: AttendanceProps) {
   return (
     <div className="flex flex-col gap-6 p-8">
       <div className="flex flex-wrap items-center justify-between gap-4">

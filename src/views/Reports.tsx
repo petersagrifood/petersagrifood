@@ -31,7 +31,11 @@ const distribution = [
   { label: 'Khác', value: '10%', color: 'border-slate-500' },
 ];
 
-export default function Reports() {
+interface ReportsProps {
+  userProfile?: any;
+}
+
+export default function Reports({ userProfile }: ReportsProps) {
   return (
     <div className="max-w-7xl mx-auto space-y-8 p-8">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">

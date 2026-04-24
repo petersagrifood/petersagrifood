@@ -1,85 +1,154 @@
 {
   "entities": {
-    "User": {
-      "title": "User Profile",
-      "description": "User account and profile information",
+    "Employee": {
+      "title": "Employee Profile",
+      "description": "Master data for employees",
       "type": "object",
       "properties": {
-        "uid": { "type": "string" },
-        "email": { "type": "string" },
-        "displayName": { "type": "string" },
-        "photoURL": { "type": "string" },
-        "role": { "type": "string", "enum": ["admin", "manager", "employee"] },
         "employeeId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "nhan_vien", "to_truong", "phong_kinh_doanh", "phong_to_chuc_hanh_chinh", "giam_doc"] },
         "department": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "locationId": { "type": "string" },
+        "insuranceId": { "type": "string" },
+        "salary": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "leave", "resigned"] },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["uid", "email", "role"]
+      "required": ["employeeId", "email", "role", "displayName"]
+    },
+    "Location": {
+      "title": "Work Location",
+      "description": "Geographical work locations and factories",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "radius": { "type": "number" }
+      },
+      "required": ["name", "lat", "lng"]
     },
     "Attendance": {
       "title": "Attendance Record",
-      "description": "Daily clock-in and clock-out logs",
+      "description": "Daily clock-in/out logs",
       "type": "object",
       "properties": {
-        "userId": { "type": "string" },
+        "employeeId": { "type": "string" },
         "type": { "type": "string", "enum": ["check-in", "check-out"] },
         "timestamp": { "type": "string", "format": "date-time" },
-        "location": {
-          "type": "object",
-          "properties": {
-            "lat": { "type": "number" },
-            "lng": { "type": "number" },
-            "address": { "type": "string" }
-          }
-        },
-        "photoURL": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "verified", "flagged"] }
-      }
+        "locationId": { "type": "string" },
+        "status": { "type": "string", "enum": ["on-time", "late", "early-leave"] },
+        "photoURL": { "type": "string" }
+      },
+      "required": ["employeeId", "type", "timestamp"]
     },
-    "Request": {
-      "title": "HR Request",
-      "description": "Leave, overtime, or other HR requests",
+    "Contract": {
+      "title": "Employment Contract",
+      "description": "Contracts and assignment details",
       "type": "object",
       "properties": {
-        "userId": { "type": "string" },
-        "userName": { "type": "string" },
-        "type": { "type": "string", "enum": ["leave", "overtime", "late", "other"] },
-        "category": { "type": "string" },
-        "description": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "processedBy": { "type": "string" },
-        "processedAt": { "type": "string", "format": "date-time" }
-      }
+        "employeeId": { "type": "string" },
+        "contractNumber": { "type": "string" },
+        "type": { "type": "string", "enum": ["probation", "official", "seasonal"] },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["active", "expired", "terminated"] }
+      },
+      "required": ["employeeId", "contractNumber", "type", "startDate"]
     },
-    "Config": {
-      "title": "System Config",
-      "description": "Global settings for the HRM system",
+    "Allowance": {
+      "title": "Allowance Details",
+      "description": "Detailed allowances per employee",
       "type": "object",
       "properties": {
-        "gpsRadius": { "type": "number" },
-        "workStartTime": { "type": "string" },
-        "workEndTime": { "type": "string" },
-        "companyName": { "type": "string" }
-      }
+        "employeeId": { "type": "string" },
+        "responsibility": { "type": "string" },
+        "toxic": { "type": "string" },
+        "seniority": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["employeeId"]
+    },
+    "Overtime": {
+      "title": "Overtime Request",
+      "description": "Seasonal and overtime work management",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "hours": { "type": "number" },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] }
+      },
+      "required": ["employeeId", "date", "hours"]
+    },
+    "Shift": {
+      "title": "Shift Definition",
+      "description": "Definition of working shifts (Morning, Afternoon, etc.)",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "color": { "type": "string" }
+      },
+      "required": ["name", "startTime", "endTime"]
+    },
+    "Assignment": {
+      "title": "Shift Assignment",
+      "description": "Assignment of an employee to a location and shift for a specific date",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "locationId": { "type": "string" },
+        "locationName": { "type": "string" },
+        "shiftId": { "type": "string" },
+        "shiftName": { "type": "string" },
+        "shiftTime": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["scheduled", "checked-in", "completed"] }
+      },
+      "required": ["employeeId", "locationId", "shiftId", "date"]
     }
   },
   "firestore": {
-    "users/{userId}": {
-      "schema": "User",
-      "description": "Individual user profiles"
+    "employees/{employeeId}": {
+      "schema": "Employee",
+      "description": "Master employee records"
+    },
+    "locations/{locationId}": {
+      "schema": "Location",
+      "description": "Company work sites"
+    },
+    "shifts/{shiftId}": {
+      "schema": "Shift",
+      "description": "Defined work shifts"
+    },
+    "assignments/{assignmentId}": {
+      "schema": "Assignment",
+      "description": "Personnel shift assignments"
     },
     "attendance/{recordId}": {
       "schema": "Attendance",
-      "description": "Global stream of attendance records"
+      "description": "Daily attendance tracking"
     },
-    "requests/{requestId}": {
-      "schema": "Request",
-      "description": "Employee requests for approval"
+    "contracts/{contractId}": {
+      "schema": "Contract",
+      "description": "Employment contracts"
     },
-    "config/system": {
-      "schema": "Config",
-      "description": "Singleton configuration document"
+    "allowances/{allowanceId}": {
+      "schema": "Allowance",
+      "description": "Allowance details by employee"
+    },
+    "overtime/{overtimeId}": {
+      "schema": "Overtime",
+      "description": "Overtime work logs"
     }
   }
 }

@@ -1,7 +1,9 @@
+export type AppRole = 'nhan_vien' | 'to_truong' | 'phong_kinh_doanh' | 'phong_to_chuc_hanh_chinh' | 'giam_doc' | 'admin';
+
 export interface Employee {
   id: string;
   name: string;
-  role: string;
+  role: AppRole;
   department: string;
   location: string;
   status: 'working' | 'leave' | 'absent';

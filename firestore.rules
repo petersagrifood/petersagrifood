@@ -1,46 +1,81 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default deny
-    match /{document=**} {
-      allow read, write: if false;
+
+    // --- GLOBAL HELPERS ---
+    function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    
+    // Check if the user is an admin or the bootstrap admin
+    function isAdmin() { 
+      return isSignedIn() && (
+        (request.auth.token.email == 'toquan09051995@gmail.com' && request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      ); 
+    }
+    
+    // --- VALIDATION BLUEPRINTS ---
+    
+    function isValidEmployee(data) {
+      return data.keys().hasAll(['employeeId', 'email', 'role', 'displayName']) &&
+             data.employeeId is string && data.employeeId.size() <= 64 &&
+             data.email is string && data.email.size() <= 128 &&
+             data.role in ['admin', 'nhan_vien', 'to_truong', 'phong_kin_doanh', 'phong_to_chuc_hanh_chinh', 'giam_doc'] &&
+             data.displayName is string && data.displayName.size() <= 128;
     }
 
-    function isSignedIn() {
-      return request.auth != null;
+    // --- MATCH BLOCKS ---
+
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if false; 
     }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+    match /employees/{employeeId} {
+      allow read: if isSignedIn();
+      
+      allow create: if (isAdmin() || (isSignedIn() && request.auth.uid == employeeId)) && 
+                      isValidEmployee(incoming()) && isValidId(employeeId);
+      allow update: if (isAdmin() || (isSignedIn() && request.auth.uid == employeeId)) && 
+                      isValidEmployee(incoming()) &&
+                      (isAdmin() || (incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt', 'department', 'locationId', 'status', 'role', 'salary', 'insuranceId'])));
+      allow delete: if isAdmin();
     }
 
-    function isAdmin() {
-      // For initial setup, we might check an admin collection or a flag on the user document
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    match /users/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isAdmin();
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && (isOwner(userId) || isAdmin());
+    match /locations/{locationId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     match /attendance/{recordId} {
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdmin();
-    }
-
-    match /requests/{requestId} {
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if isSignedIn() && (isAdmin() || existing().employeeId == request.auth.uid);
+      allow create: if isSignedIn() && incoming().employeeId == request.auth.uid && isValidId(recordId);
       allow update, delete: if isAdmin();
     }
 
-    match /config/system {
-      allow read: if isSignedIn();
+    match /contracts/{contractId} {
+      allow read: if isSignedIn() && (isAdmin() || existing().employeeId == request.auth.uid);
       allow write: if isAdmin();
+    }
+
+    match /allowances/{allowanceId} {
+      allow read: if isSignedIn() && (isAdmin() || existing().employeeId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    match /overtime/{overtimeId} {
+      allow read: if isSignedIn() && (isAdmin() || existing().employeeId == request.auth.uid);
+      allow create: if isSignedIn() && incoming().employeeId == request.auth.uid;
+      allow update: if isAdmin() || (isSignedIn() && existing().employeeId == request.auth.uid && existing().status == 'pending');
+      allow delete: if isAdmin();
+    }
+
+    // Default deny at the end
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

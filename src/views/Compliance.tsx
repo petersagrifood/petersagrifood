@@ -20,7 +20,11 @@ const complianceData = [
   { id: '4', name: 'Nguyễn Thị Hoa', doc: 'Chứng chỉ ATTP', issueDate: '2024-06-20', expiryDate: '2025-06-20', status: 'valid' },
 ];
 
-export default function Compliance() {
+interface ComplianceProps {
+  userProfile?: any;
+}
+
+export default function Compliance({ userProfile }: ComplianceProps) {
   const [filter, setFilter] = useState('all');
 
   return (

@@ -11,20 +11,37 @@ import Approvals from './views/Approvals';
 import Settings from './views/Settings';
 import Payroll from './views/Payroll';
 import Compliance from './views/Compliance';
+import ContractManagement from './views/ContractManagement';
 import { Smartphone, Monitor, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth } from './lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
+import { ensureUserExists, getUserProfile } from './services/dbService';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+      if (authUser) {
+        await ensureUserExists(authUser);
+        const profile = await getUserProfile(authUser.uid) as any;
+        setUserProfile(profile);
+        
+        // Auto-switch to mobile view for employees by default
+        if (profile?.role === 'nhan_vien') {
+          setViewMode('mobile');
+        } else if (!userProfile) { // Only auto-set on initial load/login
+          setViewMode('desktop');
+        }
+      } else {
+        setUserProfile(null);
+      }
+      setUser(authUser);
       setLoading(false);
     });
     return () => unsubscribe();
@@ -47,7 +64,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <div className="relative group">
-          <MobileApp />
+          <MobileApp userProfile={userProfile} />
           <button 
             onClick={() => setViewMode('desktop')}
             className="absolute -right-16 top-0 bg-white p-3 rounded-full shadow-xl text-slate-800 hover:scale-110 active:scale-95 transition-all opacity-0 group-hover:opacity-100"
@@ -62,7 +79,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-green-100 selection:text-green-900">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} userProfile={userProfile} />
       
       <main className="lg:ml-64 min-h-screen flex flex-col">
         <TopNav />
@@ -77,15 +94,16 @@ export default function App() {
               transition={{ duration: 0.2 }}
               className="min-h-full"
             >
-              {activeTab === 'dashboard' && <Dashboard />}
-              {activeTab === 'employees' && <EmployeeList />}
-              {activeTab === 'attendance' && <Attendance />}
-              {activeTab === 'reports' && <Reports />}
-              {activeTab === 'approvals' && <Approvals />}
-              {activeTab === 'settings' && <Settings />}
-              {activeTab === 'payroll' && <Payroll />}
-              {activeTab === 'compliance' && <Compliance />}
-              {['other'].includes(activeTab) && (
+              {activeTab === 'dashboard' && <Dashboard userProfile={userProfile} />}
+              {activeTab === 'employees' && <EmployeeList userProfile={userProfile} />}
+              {activeTab === 'attendance' && <Attendance userProfile={userProfile} />}
+              {activeTab === 'reports' && <Reports userProfile={userProfile} />}
+              {activeTab === 'approvals' && <Approvals userProfile={userProfile} />}
+              {activeTab === 'settings' && <Settings userProfile={userProfile} />}
+              {activeTab === 'payroll' && <Payroll userProfile={userProfile} />}
+              {activeTab === 'compliance' && <Compliance userProfile={userProfile} />}
+              {activeTab === 'contract' && <ContractManagement userProfile={userProfile} />}
+              {['payroll_insurance', 'allowance', 'other'].includes(activeTab) && (
                 <div className="flex flex-col items-center justify-center h-[calc(100vh-64px)] text-slate-400 gap-4">
                   <div className="p-8 rounded-full bg-slate-100">
                     <Monitor className="h-12 w-12" />
