@@ -363,11 +363,14 @@ export default function ContractManagement({ userProfile }: ContractManagementPr
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase italic pl-1 tracking-widest">Ngày kết thúc</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase italic pl-1 tracking-widest">
+                        Ngày kết thúc {['official', 'seasonal'].includes(formData.type) && <span className="text-red-500">*</span>}
+                      </label>
                       <div className="relative">
                         <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                         <input 
                           type="date"
+                          required={['official', 'seasonal'].includes(formData.type)}
                           value={formData.endDate}
                           onChange={(e) => setFormData({...formData, endDate: e.target.value})}
                           className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl pl-11 pr-4 text-xs font-black italic text-slate-900 outline-none focus:border-green-600 transition-all font-sans"

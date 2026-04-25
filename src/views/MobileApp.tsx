@@ -32,7 +32,8 @@ import {
   Calendar,
   Gift,
   XCircle,
-  Search
+  Search,
+  FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
@@ -62,6 +63,7 @@ interface MobileAppProps {
 export default function MobileApp({ userProfile }: MobileAppProps) {
   const [tab, setTab] = useState<MobileTab>('dashboard');
   const [isConfirming, setIsConfirming] = useState(false);
+  const [attendanceData, setAttendanceData] = useState<any>(null);
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
   const [requestSubView, setRequestSubView] = useState<'list' | 'shift-change' | 'leave-approval'>('list');
   const [todayAssignment, setTodayAssignment] = useState<any>(null);
@@ -204,11 +206,21 @@ export default function MobileApp({ userProfile }: MobileAppProps) {
                   <AttendanceConfirmView 
                     userProfile={userProfile} 
                     onBack={() => setIsConfirming(false)} 
+                    attendanceData={attendanceData}
                   />
                 ) : (
                   <GPSAttendanceView 
                     userProfile={userProfile} 
-                    onConfirm={() => setIsConfirming(true)} 
+                    onConfirm={(photo) => {
+                      const now = new Date();
+                      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} ${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+                      setAttendanceData({
+                        photo,
+                        checkInTime: timeStr,
+                        checkOutTime: '-- : -- : --'
+                      });
+                      setIsConfirming(true);
+                    }} 
                   />
                 )
               )}
@@ -271,16 +283,23 @@ export default function MobileApp({ userProfile }: MobileAppProps) {
 }
 
 function MyScheduleView({ onShiftChange }: { onShiftChange: () => void }) {
+  const [expandedDayId, setExpandedDayId] = useState<string | null>('t3');
+  
   const days = [
-    { id: 't2', label: 'Thứ Hai, 24/07', status: 'completed', desc: 'Đã hoàn thành' },
-    { id: 't3', label: 'Thứ Ba, 25/07', status: 'today', desc: 'Lịch làm việc hôm nay', 
+    { id: 't2', label: 'Thứ Hai', date: '24/07', status: 'completed', desc: 'Đã hoàn thành', 
+      shift: '07h30 - 16h30', location: 'CM XTRA TÂN PHONG', type: 'Hành chính' },
+    { id: 't3', label: 'Thứ Ba', date: '25/07', status: 'today', desc: 'Lịch làm việc hôm nay', 
       location: 'CM XTRA TÂN PHONG', 
       address: 'Tầng trệt, SC VivoCity, 1058 Nguyễn Văn Linh, P. Tân Phong, Quận 7, TP. HCM',
-      shift: '07h30 - 16h30', type: 'Hành chính' 
+      shift: '07h30 - 16h30', type: 'Hành chính',
+      notes: 'Giao hàng mẫu cho khách hàng lúc 10h sáng. Lưu ý kiểm tra kỹ số lượng trước khi đi.'
     },
-    { id: 't4', label: 'Thứ Tư, 26/07', status: 'pending', desc: 'Chưa bắt đầu' },
-    { id: 't5', label: 'Thứ Năm, 27/07', status: 'pending', desc: 'Chưa bắt đầu' },
-    { id: 't6', label: 'Thứ Sáu, 28/07', status: 'pending', desc: 'Chưa bắt đầu' },
+    { id: 't4', label: 'Thứ Tư', date: '26/07', status: 'pending', desc: 'Chưa bắt đầu',
+      shift: '14h00 - 22h00', location: 'SIÊU THỊ CO.OP MART', type: 'Ca Chiều' },
+    { id: 't5', label: 'Thứ Năm', date: '27/07', status: 'pending', desc: 'Chưa bắt đầu',
+      shift: '14h00 - 22h00', location: 'SIÊU THỊ CO.OP MART', type: 'Ca Chiều' },
+    { id: 't6', label: 'Thứ Sáu', date: '28/07', status: 'pending', desc: 'Chưa bắt đầu',
+      shift: '07h30 - 16h30', location: 'CM XTRA TÂN PHONG', type: 'Hành chính' },
   ];
 
   return (
@@ -293,82 +312,111 @@ function MyScheduleView({ onShiftChange }: { onShiftChange: () => void }) {
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {days.map((day) => (
           <div key={day.id} className={cn(
-            "bg-white rounded-3xl border transition-all overflow-hidden",
-            day.status === 'today' ? "border-green-600 ring-4 ring-green-50 shadow-lg" : "border-slate-100 shadow-sm"
+            "bg-white rounded-[2rem] border transition-all overflow-hidden",
+            day.status === 'today' ? "border-green-600 ring-2 ring-green-50 shadow-md" : "border-slate-100 shadow-sm"
           )}>
-            <div className={cn(
-              "p-4 flex items-center justify-between",
-              day.status === 'today' ? "bg-white" : "bg-white"
-            )}>
-              <div className="flex items-center gap-4">
+            <div 
+              onClick={() => setExpandedDayId(expandedDayId === day.id ? null : day.id)}
+              className="p-3 px-4 flex items-center justify-between cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
                 <div className={cn(
-                  "h-10 w-10 rounded-2xl flex items-center justify-center text-xs font-black italic shadow-inner",
+                  "h-12 w-12 rounded-2xl flex flex-col items-center justify-center shadow-inner",
                   day.status === 'today' ? "bg-green-600 text-white" : "bg-slate-50 text-slate-400"
                 )}>
-                  {day.id.toUpperCase()}
+                  <span className="text-[10px] font-black italic uppercase leading-none mb-0.5">{day.id}</span>
+                  <span className="text-[12px] font-black italic leading-none">{day.date}</span>
                 </div>
                 <div>
-                  <p className="text-[11px] font-black text-slate-900 italic leading-none mb-1">{day.label}</p>
-                  <p className={cn("text-[9px] font-bold italic", day.status === 'today' ? "text-green-600" : "text-slate-400")}>{day.desc}</p>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <p className="text-[12px] font-black text-slate-900 italic uppercase leading-none">{day.location}</p>
+                    {day.status === 'today' && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-600 animate-pulse" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 text-[9px] font-bold italic text-slate-400 uppercase tracking-tighter">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-2.5 w-2.5" />
+                      <span>{day.shift}</span>
+                    </div>
+                    <span>•</span>
+                    <span className={cn(day.status === 'today' ? "text-green-600 font-black" : "")}>{day.type}</span>
+                  </div>
                 </div>
               </div>
-              <ChevronRight className={cn("h-4 w-4", day.status === 'today' ? "text-green-600 rotate-90" : "text-slate-100")} />
+              <div className={cn(
+                "h-8 w-8 rounded-xl flex items-center justify-center transition-transform duration-300",
+                expandedDayId === day.id ? "rotate-90 bg-slate-50 text-slate-900" : "bg-transparent text-slate-200"
+              )}>
+                <ChevronRight className="h-4 w-4" />
+              </div>
             </div>
 
-            {day.status === 'today' && (
-              <div className="px-4 pb-4 space-y-4">
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <div className="flex gap-3 mb-3">
-                    <div className="h-8 w-8 bg-white rounded-xl shadow-sm flex items-center justify-center text-slate-300">
-                      <Briefcase className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-[10px] font-black text-slate-900 uppercase italic tracking-widest">{day.location}</h4>
-                      <p className="text-[9px] text-slate-400 font-bold italic leading-tight mt-1">{day.address}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                    <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 bg-green-50 rounded-full flex items-center justify-center text-green-600 shadow-sm">
-                        <Clock className="h-3.3 w-3.3" />
+            <AnimatePresence>
+              {expandedDayId === day.id && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-4 pb-4 space-y-4">
+                    <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50 space-y-4">
+                      {day.address && (
+                        <div className="flex gap-3">
+                          <div className="h-7 w-7 bg-white rounded-lg shadow-sm flex items-center justify-center text-slate-400 flex-shrink-0">
+                            <MapPin className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-[8px] font-black text-slate-400 uppercase italic tracking-widest mb-1">ĐỊA CHỈ LÀM VIỆC</h4>
+                            <p className="text-[10px] text-slate-700 font-bold italic leading-relaxed">{day.address}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex gap-3">
+                        <div className="h-7 w-7 bg-white rounded-lg shadow-sm flex items-center justify-center text-slate-400 flex-shrink-0">
+                          <FileText className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-[8px] font-black text-slate-400 uppercase italic tracking-widest mb-1">GHI CHÚ / CÔNG VIỆC</h4>
+                          <p className="text-[10px] text-slate-700 font-bold italic leading-relaxed">
+                            {day.notes || "Không có ghi chú nào cho ngày hôm nay."}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[8px] font-black text-slate-400 uppercase italic leading-none mb-0.5">CA HIỆN TẠI</p>
-                        <p className="text-[10px] font-black text-green-700 italic leading-none">{day.shift}</p>
-                      </div>
                     </div>
-                    <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase italic">{day.type}</span>
-                  </div>
-                </div>
 
-                <div className="flex gap-2">
-                  <button 
-                    onClick={onShiftChange}
-                    className="flex-1 h-12 bg-green-600 text-white rounded-2xl flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest shadow-xl shadow-green-100 active:scale-95 transition-all"
-                  >
-                    <Waves className="h-4 w-4" />
-                    <span>Xin đổi ca</span>
-                  </button>
-                  <button className="flex-1 h-12 bg-white border-2 border-green-600 text-green-600 rounded-2xl flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest active:bg-green-50 transition-all">
-                    <Clock className="h-4 w-4" />
-                    <span>Đi trễ/Về sớm</span>
-                  </button>
-                </div>
-              </div>
-            )}
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={onShiftChange}
+                        className="flex-1 h-11 bg-green-600 text-white rounded-2xl flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest shadow-lg shadow-green-100 active:scale-95 transition-all"
+                      >
+                        <Waves className="h-3.5 w-3.5" />
+                        <span>Xin đổi ca</span>
+                      </button>
+                      <button className="flex-1 h-11 bg-white border-2 border-slate-100 text-slate-400 rounded-2xl flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest active:bg-slate-50 transition-all">
+                        <Clock className="h-3.5 w-3.5" />
+                        <span>Đi trễ/Về sớm</span>
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         ))}
       </div>
 
       <div className="bg-green-50 p-4 rounded-3xl border border-green-100 flex items-start gap-4">
-        <div className="h-8 w-8 bg-green-600 rounded-full flex items-center justify-center text-white flex-shrink-0">
+        <div className="h-8 w-8 bg-green-600 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-green-200">
           <AlertCircle className="h-4 w-4" />
         </div>
         <div>
-          <h4 className="text-[10px] font-black text-green-800 uppercase italic mb-1 tracking-widest">Quy định đổi ca</h4>
+          <h4 className="text-[10px] font-black text-green-800 uppercase italic mb-0.5 tracking-widest">Quy định đổi ca</h4>
           <p className="text-[9px] text-green-700 font-bold italic leading-relaxed">Yêu cầu đổi ca phải được gửi trước ít nhất 24 giờ. Vui lòng liên hệ quản lý trực tiếp nếu có trường hợp khẩn cấp.</p>
         </div>
       </div>
@@ -378,18 +426,59 @@ function MyScheduleView({ onShiftChange }: { onShiftChange: () => void }) {
 
 function RequestsListView({ onShiftChange, onLeaveApproval }: { onShiftChange: () => void, onLeaveApproval: () => void }) {
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+  const [expandedRequestId, setExpandedRequestId] = useState<string | null>(null);
+
+  const requests = [
+    {
+      id: 'MSF-0012',
+      type: 'shift-change',
+      user: 'Nguyễn Văn An',
+      status: 'pending',
+      currentShift: 'Ca Sáng (06h00 - 14h00)',
+      targetShift: 'Ca Chiều (14h00 - 22h00)',
+      date: 'Thứ Ba, 24/10',
+      reason: 'Gia đình có việc đột xuất cần hỗ trợ đưa con đi khám bệnh định kỳ vào buổi sáng.',
+      history: [
+        { role: 'Tổ trưởng', name: 'Trần Minh Quân', status: 'pending', time: '' }
+      ]
+    },
+    {
+      id: 'LV-9921',
+      type: 'leave',
+      user: 'Lê Thị Hoa',
+      status: 'approved',
+      details: 'Nghỉ phép: 28/10 • 1 ngày',
+      history: [
+        { role: 'Trưởng phòng KD', name: 'Hoàng Thị Thảo', status: 'approved', time: '14:20 - 20/10' },
+        { role: 'TCHC', name: 'Lê Văn Nam', status: 'approved', time: '16:45 - 20/10' }
+      ]
+    },
+    {
+      id: 'MSF-0015',
+      type: 'shift-change',
+      user: 'Phạm Minh Tuấn',
+      status: 'rejected',
+      details: 'Đổi ca: 25/10 • Ca Chiều',
+      history: [
+        { role: 'Tổ trưởng', name: 'Trần Minh Quân', status: 'rejected', time: '09:00 - 21/10', note: 'Không đủ nhân sự trực ca sáng.' }
+      ]
+    }
+  ];
+
+  const filteredRequests = requests.filter(r => filter === 'all' || r.status === filter);
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 space-y-4">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 space-y-4 pb-20">
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-        <h3 className="text-sm font-black text-slate-900 uppercase italic mb-3">Phê duyệt đối ca</h3>
-        <p className="text-[10px] text-slate-500 font-bold italic mb-4">Quản lý và theo dõi tiến độ các yêu cầu hoán đổi ca làm việc.</p>
+        <h3 className="text-sm font-black text-slate-900 uppercase italic mb-3">Phê duyệt & Theo dõi</h3>
+        <p className="text-[10px] text-slate-500 font-bold italic mb-4">Quản lý và theo dõi tiến độ các yêu cầu từ nhân sự.</p>
         
         <div className="flex gap-1">
           {[
-            { id: 'pending', label: 'Đang chờ (3)', color: 'bg-green-600 text-white' },
+            { id: 'pending', label: 'Cần duyệt', color: 'bg-green-600 text-white' },
             { id: 'approved', label: 'Đã duyệt', color: 'bg-slate-100 text-slate-400' },
-            { id: 'rejected', label: 'Bị từ chối', color: 'bg-slate-100 text-slate-400' }
+            { id: 'rejected', label: 'Từ chối', color: 'bg-slate-100 text-slate-400' },
+            { id: 'all', label: 'Tất cả', color: 'bg-slate-100 text-slate-400' }
           ].map((btn) => (
             <button 
               key={btn.id} 
@@ -403,74 +492,115 @@ function RequestsListView({ onShiftChange, onLeaveApproval }: { onShiftChange: (
       </div>
 
       <div className="space-y-3">
-        <div onClick={onShiftChange} className="bg-white p-4 rounded-2xl border-l-4 border-l-green-600 shadow-sm transition-all active:scale-95 cursor-pointer">
-          <div className="flex justify-between items-start mb-3">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 bg-green-50 rounded-full flex items-center justify-center text-green-600">
-                <ArrowRight className="h-4 w-4" />
+        {filteredRequests.map((req) => (
+          <div 
+            key={req.id} 
+            onClick={() => setExpandedRequestId(expandedRequestId === req.id ? null : req.id)}
+            className={cn(
+              "bg-white rounded-2xl border-l-4 shadow-sm transition-all overflow-hidden cursor-pointer",
+              req.status === 'pending' ? "border-l-green-600" : req.status === 'approved' ? "border-l-slate-200" : "border-l-red-200"
+            )}
+          >
+            <div className="p-4">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex items-center gap-2">
+                  <div className={cn("h-8 w-8 rounded-full flex items-center justify-center", req.type === 'leave' ? "bg-orange-50 text-orange-400" : "bg-green-50 text-green-600")}>
+                    {req.type === 'leave' ? <Sun className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
+                  </div>
+                  <div>
+                    <p className="text-[8px] font-black text-slate-400 uppercase italic leading-none mb-1">YÊU CẦU {req.id}</p>
+                    <p className="text-xs font-black text-slate-900 italic">{req.user}</p>
+                  </div>
+                </div>
+                <span className={cn(
+                  "px-2 py-0.5 rounded text-[8px] font-black uppercase italic",
+                  req.status === 'pending' ? "bg-green-50 text-green-600 border border-green-100" : 
+                  req.status === 'approved' ? "bg-slate-50 text-slate-400" : "bg-red-50 text-red-400"
+                )}>
+                  {req.status === 'pending' ? 'CẦN DUYỆT' : req.status === 'approved' ? 'ĐÃ DUYỆT' : 'TỪ CHỐI'}
+                </span>
               </div>
-              <div>
-                <p className="text-[8px] font-black text-slate-400 uppercase italic leading-none mb-1">YÊU CẦU MSF-0012</p>
-                <p className="text-xs font-black text-slate-900 italic">Nguyễn Văn An</p>
+              
+              <div className="mb-2">
+                <p className="text-[9px] text-slate-500 font-bold italic lowercase pl-10">
+                  {req.type === 'leave' ? req.details : `${req.currentShift} → ${req.targetShift}`}
+                </p>
+                <p className="text-[8px] text-slate-400 italic pl-10 mt-1 uppercase tracking-tighter">{req.date || 'Hôm nay'}</p>
               </div>
-            </div>
-            <span className="bg-green-50 text-green-600 px-2 py-0.5 rounded text-[8px] font-black uppercase italic">CẦN DUYỆT</span>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4 py-2 border-y border-slate-50 mb-3">
-            <div>
-              <p className="text-[8px] font-black text-slate-400 uppercase italic leading-none mb-1">CA HIỆN TẠI</p>
-              <p className="text-[10px] font-black text-slate-900 leading-tight italic">Ca Sáng (06h00 - 14h00)</p>
-              <p className="text-[9px] text-slate-500 font-bold italic">Thứ Ba, 24/10</p>
-            </div>
-            <div>
-              <p className="text-[8px] font-black text-slate-400 uppercase italic leading-none mb-1">CA ĐỔI SANG</p>
-              <p className="text-[10px] font-black text-green-600 leading-tight italic">Ca Chiều (14h00 - 22h00)</p>
-              <p className="text-[9px] text-slate-500 font-bold italic">Thứ Ba, 24/10</p>
-            </div>
-          </div>
-          
-          <div className="mb-3">
-            <p className="text-[8px] font-black text-slate-400 uppercase italic leading-none mb-1">LÝ DO ĐỔI CA</p>
-            <p className="text-[9px] text-slate-600 font-bold italic leading-relaxed">Gia đình có việc đột xuất cần hỗ trợ đưa con đi khám bệnh định kỳ vào buổi sáng.</p>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
-                <Check className="h-3 w-3 text-slate-300" />
+              <div className="flex items-center justify-end">
+                <ChevronRight className={cn("h-4 w-4 text-slate-200 transition-transform", expandedRequestId === req.id && "rotate-90")} />
               </div>
-              <p className="text-[9px] text-slate-400 font-black italic">Tổ trưởng trực tiếp (Đang chờ)</p>
             </div>
-            <ChevronRight className="h-4 w-4 text-slate-200" />
-          </div>
-        </div>
 
-        <div onClick={onLeaveApproval} className="bg-white p-4 rounded-2xl border-l-4 border-l-slate-200 shadow-sm active:bg-slate-50 transition-all cursor-pointer">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 bg-slate-100 rounded-full flex items-center justify-center">
-                <Sun className="h-3 w-3 text-slate-400" />
-              </div>
-              <p className="text-xs font-black text-slate-900 italic">Lê Thị Hoa</p>
-            </div>
-            <span className="text-[8px] font-black text-slate-400 uppercase italic">ĐÃ DUYỆT</span>
-          </div>
-          <p className="text-[9px] text-slate-500 font-bold italic lowercase pl-8">Nghỉ phép: 28/10 • 1 ngày</p>
-        </div>
+            <AnimatePresence>
+              {expandedRequestId === req.id && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }} 
+                  animate={{ height: 'auto', opacity: 1 }} 
+                  exit={{ height: 0, opacity: 0 }}
+                  className="bg-slate-50/50 border-t border-slate-50 p-4 pt-1"
+                >
+                  <div className="space-y-4 py-3">
+                    {req.reason && (
+                      <div className="space-y-1 mb-4">
+                        <p className="text-[8px] font-black text-slate-400 uppercase italic">LÝ DO CHI TIẾT</p>
+                        <p className="text-[9px] text-slate-600 font-bold italic leading-relaxed">“{req.reason}”</p>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-3">
+                      <p className="text-[8px] font-black text-slate-400 uppercase italic tracking-widest mb-1">LỊCH SỬ PHÊ DUYỆT</p>
+                      {req.history.map((hist, i) => (
+                        <div key={i} className="flex items-start gap-3 relative">
+                          {i < req.history.length - 1 && <div className="absolute left-2 top-4 bottom-0 w-px bg-slate-200"></div>}
+                          <div className={cn(
+                            "h-4 w-4 rounded-full border-2 mt-0.5 z-10",
+                            hist.status === 'approved' ? "bg-green-600 border-green-100" : 
+                            hist.status === 'rejected' ? "bg-red-500 border-red-100" : "bg-white border-slate-200"
+                          )}></div>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-center mb-0.5">
+                              <p className="text-[9px] font-black text-slate-900 uppercase italic">{hist.role}: {hist.name}</p>
+                              <span className={cn(
+                                "text-[7px] font-black uppercase px-1 rounded",
+                                hist.status === 'approved' ? "text-green-600 bg-green-50" : 
+                                hist.status === 'rejected' ? "text-red-500 bg-red-50" : "text-slate-400 bg-slate-100"
+                              )}>
+                                {hist.status === 'approved' ? 'ĐÃ DUYỆT' : hist.status === 'rejected' ? 'TỪ CHỐI' : 'CHỜ DUYỆT'}
+                              </span>
+                            </div>
+                            {hist.time && <p className="text-[8px] text-slate-400 font-bold italic">{hist.time}</p>}
+                            {hist.note && <p className="text-[8px] text-red-500 font-bold italic mt-1 leading-relaxed leading-tight">Ghi chú: {hist.note}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
 
-        <div className="bg-white p-4 rounded-2xl border-l-4 border-l-red-200 shadow-sm opacity-60">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 bg-red-50 rounded-full flex items-center justify-center">
-                <Moon className="h-3 w-3 text-red-400" />
-              </div>
-              <p className="text-xs font-black text-slate-900 italic">Phạm Minh Tuấn</p>
-            </div>
-            <span className="text-[8px] font-black text-red-400 uppercase italic">TỪ CHỐI</span>
+                    <div className="flex gap-2 mt-6 pt-4 border-t border-slate-100">
+                      {req.status === 'pending' ? (
+                        <>
+                          <button className="flex-1 h-9 rounded-xl border border-red-100 text-red-500 text-[8px] font-black uppercase tracking-widest active:bg-red-50 transition-colors">TỪ CHỐI</button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              req.type === 'leave' ? onLeaveApproval() : onShiftChange();
+                            }}
+                            className="flex-1 h-9 rounded-xl bg-green-600 text-white text-[8px] font-black uppercase tracking-widest shadow-lg shadow-green-100 active:scale-95 transition-all"
+                          >
+                            DUYỆT
+                          </button>
+                        </>
+                      ) : (
+                        <button className="w-full h-9 rounded-xl border border-slate-100 text-slate-400 text-[8px] font-black uppercase tracking-widest active:bg-slate-50 transition-colors">Xem tài liệu đính kèm</button>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-          <p className="text-[9px] text-slate-500 font-bold italic lowercase pl-8">Đổi ca: 25/10 • Ca Chiều</p>
-        </div>
+        ))}
       </div>
     </motion.div>
   );
@@ -1233,16 +1363,91 @@ function LocationShiftDetailView({ location, onBack, isManagement }: { location:
   );
 }
 
-function GPSAttendanceView({ userProfile, onConfirm }: { userProfile: any, onConfirm: () => void }) {
+function GPSAttendanceView({ userProfile, onConfirm }: { userProfile: any, onConfirm: (photo?: string) => void }) {
   const [now, setNow] = useState(new Date());
+  const [isCapturing, setIsCapturing] = useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  const startCamera = async () => {
+    setIsCapturing(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.error("Camera error:", err);
+      setIsCapturing(false);
+      onConfirm(); // Fallback to normal confirm
+    }
+  };
+
+  const takePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0);
+        const photo = canvas.toDataURL('image/jpeg');
+        
+        // Stop camera
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+        
+        setIsCapturing(false);
+        onConfirm(photo);
+      }
+    }
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-10">
+      {isCapturing && (
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6">
+          <div className="w-full aspect-square rounded-[3rem] overflow-hidden border-4 border-green-600 bg-slate-900 mb-8 shadow-2xl relative">
+            <video 
+              ref={videoRef} 
+              autoPlay 
+              playsInline 
+              className="w-full h-full object-cover scale-x-[-1]"
+            />
+            <div className="absolute inset-x-0 bottom-4 flex justify-center">
+               <div className="h-2 w-32 bg-white/20 rounded-full overflow-hidden backdrop-blur-md">
+                 <div className="h-full bg-green-500 w-1/2 animate-[shimmer_2s_infinite]"></div>
+               </div>
+            </div>
+          </div>
+          <p className="text-white text-xs font-black uppercase italic tracking-widest mb-10 text-center opacity-60">Căn chỉnh khuôn mặt vào khung hình</p>
+          <div className="flex gap-4 w-full">
+            <button 
+              onClick={() => {
+                const stream = videoRef.current?.srcObject as MediaStream;
+                stream?.getTracks().forEach(track => track.stop());
+                setIsCapturing(false);
+              }}
+              className="flex-1 h-14 bg-white/10 text-white rounded-3xl font-black uppercase text-[10px] tracking-widest border border-white/20"
+            >
+              Hủy
+            </button>
+            <button 
+              onClick={takePhoto}
+              className="flex-[2] h-14 bg-green-600 text-white rounded-3xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-green-900/50 flex items-center justify-center gap-3"
+            >
+              <div className="h-6 w-6 bg-white rounded-full flex items-center justify-center">
+                <div className="h-4 w-4 border-2 border-green-600 rounded-full"></div>
+              </div>
+              Chụp ảnh
+            </button>
+          </div>
+        </div>
+      )}
       <div className="bg-slate-50 px-4 py-2 flex items-center justify-between border-b border-slate-100">
         <div>
           <p className="text-[8px] font-black text-slate-400 uppercase italic tracking-widest leading-none">GIỜ HIỆN TẠI</p>
@@ -1285,9 +1490,17 @@ function GPSAttendanceView({ userProfile, onConfirm }: { userProfile: any, onCon
                 <p className="text-[9px] text-slate-400 mt-0.5 italic lowercase">72 Lê Thánh Tôn, Bến Nghé, Quận 1</p>
               </div>
             </div>
-            <div className="bg-green-50 px-2 py-1 rounded-full flex items-center gap-1">
-              <div className="h-1.5 w-1.5 rounded-full bg-green-600 animate-pulse"></div>
-              <span className="text-[9px] font-black text-green-700 uppercase">Trong vùng</span>
+            <div className="flex flex-col items-end gap-2">
+              <button 
+                onClick={startCamera}
+                className="h-10 w-10 bg-green-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-green-100 active:scale-95 transition-all"
+              >
+                <Camera className="h-5 w-5" />
+              </button>
+              <div className="bg-green-50 px-2 py-1 rounded-full flex items-center gap-1">
+                <div className="h-1.5 w-1.5 rounded-full bg-green-600 animate-pulse"></div>
+                <span className="text-[9px] font-black text-green-700 uppercase">Trong vùng</span>
+              </div>
             </div>
           </div>
           
@@ -1310,14 +1523,14 @@ function GPSAttendanceView({ userProfile, onConfirm }: { userProfile: any, onCon
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <button onClick={onConfirm} className="flex flex-col items-center justify-center p-4 bg-green-600 text-white rounded-3xl shadow-xl shadow-green-100 active:scale-98 transition-all group overflow-hidden relative">
+          <button onClick={() => onConfirm()} className="flex flex-col items-center justify-center p-4 bg-green-600 text-white rounded-3xl shadow-xl shadow-green-100 active:scale-98 transition-all group overflow-hidden relative">
             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center mb-2">
               <Fingerprint className="h-6 w-6" />
             </div>
             <span className="text-[9px] font-black uppercase tracking-widest leading-none text-center">Vân tay / GPS</span>
           </button>
-          <button onClick={onConfirm} className="flex flex-col items-center justify-center p-4 bg-white border-2 border-green-600 text-green-600 rounded-3xl shadow-xl shadow-green-50 active:scale-98 transition-all group overflow-hidden relative">
+          <button onClick={startCamera} className="flex flex-col items-center justify-center p-4 bg-white border-2 border-green-600 text-green-600 rounded-3xl shadow-xl shadow-green-50 active:scale-98 transition-all group overflow-hidden relative">
             <div className="absolute inset-0 bg-green-50/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="h-10 w-10 bg-green-50 rounded-full flex items-center justify-center mb-2">
               <Camera className="h-6 w-6" />
@@ -1334,68 +1547,92 @@ function GPSAttendanceView({ userProfile, onConfirm }: { userProfile: any, onCon
   );
 }
 
-function AttendanceConfirmView({ userProfile, onBack }: { userProfile: any, onBack: () => void }) {
+function AttendanceConfirmView({ userProfile, onBack, attendanceData }: { userProfile: any, onBack: () => void, attendanceData: any }) {
   const [success, setSuccess] = useState(true);
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="p-4 space-y-6">
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 ring-1 ring-black/5">
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-8">
-            <div>
-              <p className="text-[9px] font-black text-slate-400 uppercase italic">Nhân viên</p>
-              <h2 className="text-xl font-black text-slate-900 uppercase italic leading-none mt-1">{userProfile?.displayName || 'User Name'}</h2>
-              <p className="text-[10px] text-slate-500 font-bold italic mt-1 lowercase">ID: {userProfile?.uid?.slice(-8).toUpperCase()}</p>
-            </div>
-            <span className="bg-green-100 text-green-600 px-3 py-1 rounded-lg text-[9px] font-black uppercase italic">Hôm nay</span>
+    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex-1 bg-white min-h-full">
+      {/* Re-styled Header for location mapping */}
+      <div className="bg-green-600 p-4 pt-10 flex items-center justify-center relative">
+        <button onClick={onBack} className="absolute left-4 top-10 text-white active:scale-90 transition-all">
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+        <h2 className="text-sm font-black text-white uppercase italic tracking-widest">CM XTRA TAN PHONG</h2>
+      </div>
+
+      <div className="p-4 pt-8 space-y-8">
+        {/* Toggle Indicator */}
+        <div className="flex items-center gap-3">
+          <div className={cn(
+            "h-6 w-11 rounded-full p-1 relative cursor-pointer transition-all",
+            success ? "bg-blue-400" : "bg-slate-300"
+          )}>
+            <div className={cn("h-4 w-4 bg-orange-400 rounded-full absolute transition-all", success ? "right-1" : "left-1 shadow-inner")}></div>
           </div>
+          <span className="text-[14px] font-bold text-slate-400 italic">Thành công</span>
+        </div>
 
-          <div className="flex justify-around items-center mb-10">
-            <div className="flex flex-col items-center">
-              <p className="text-[9px] font-black text-slate-400 uppercase italic mb-3">Giờ vào</p>
-              <div className="relative h-20 w-20 flex items-center justify-center">
-                <div className="absolute inset-0 border-[5px] border-green-50 rounded-full"></div>
-                <div className="absolute inset-0 border-[5px] border-green-600 rounded-full" style={{ clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)' }}></div>
-                <div className="p-2 bg-green-50 rounded-full"><CheckCircle2 className="h-5 w-5 text-green-600" /></div>
+        {/* Dual Circle Photo Attendance */}
+        <div className="flex justify-around items-start">
+          {/* Checkin Circle */}
+          <div className="flex flex-col items-center space-y-3">
+            <div className="relative">
+              <div className="h-32 w-32 rounded-full border-2 border-slate-100 p-0.5 overflow-hidden shadow-inner bg-slate-50">
+                {attendanceData?.photo ? (
+                  <img src={attendanceData.photo} className="h-full w-full object-cover rounded-full" alt="Checkin" />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center opacity-20">
+                    <Camera className="h-10 w-10" />
+                  </div>
+                )}
               </div>
-              <p className="mt-3 text-base font-black text-slate-900 uppercase italic">08:38:25</p>
-              <p className="text-[8px] text-green-600 font-black italic">27/07/2025</p>
-            </div>
-
-            <div className="h-px w-6 bg-slate-100"></div>
-
-            <div className="flex flex-col items-center opacity-40">
-              <p className="text-[9px] font-black text-slate-400 uppercase italic mb-3">Giờ ra</p>
-              <div className="relative h-20 w-20 flex items-center justify-center">
-                <div className="absolute inset-0 border-[5px] border-slate-50 rounded-full"></div>
-                <div className="p-2 bg-slate-50 rounded-full"><History className="h-5 w-5 text-slate-300" /></div>
-              </div>
-              <p className="mt-3 text-base font-black text-slate-300 italic tracking-tighter">-- : -- : --</p>
-            </div>
-          </div>
-
-          <div className={cn("p-4 rounded-2xl flex items-center justify-between mb-6 transition-all border shadow-inner", success ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100")}>
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className={cn("h-5 w-5", success ? "text-green-600" : "text-red-500")} />
-              <div>
-                <p className="text-[10px] font-black text-slate-900 uppercase italic">{success ? "Hợp lệ" : "Lỗi ghi nhận"}</p>
-                <p className="text-[8px] text-slate-500 italic lowercase font-bold">Xác nhận dữ liệu thành công</p>
+              <div className="absolute bottom-1 right-1 h-8 w-8 bg-green-500 rounded-full border-2 border-white flex items-center justify-center shadow-lg transform translate-x-1 translate-y-1">
+                <Check className="h-5 w-5 text-white" />
               </div>
             </div>
-            <div onClick={() => setSuccess(!success)} className={cn("h-6 w-11 rounded-full p-1 relative cursor-pointer transition-all", success ? "bg-green-600" : "bg-slate-300 shadow-inner")}>
-              <div className={cn("h-4 w-4 bg-white rounded-full absolute transition-all", success ? "right-1" : "left-1")}></div>
+            <div className="text-center">
+              <p className="text-[12px] font-bold text-slate-400 italic leading-none mb-1">Checkin</p>
+              <p className="text-[12px] font-black text-rose-500 leading-none">
+                {attendanceData?.checkInTime || '06:38:25 27/07'}
+              </p>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <p className="text-[9px] font-black text-slate-400 uppercase italic pl-1">Ghi chú hành chính</p>
-            <textarea placeholder="Nhập ghi chú nếu có sai sót..." className="w-full h-24 p-4 bg-slate-50 border border-slate-100 rounded-3xl text-xs font-bold outline-none focus:border-green-600 transition-colors shadow-inner" />
+          {/* Checkout Circle */}
+          <div className="flex flex-col items-center space-y-3 opacity-40">
+            <div className="relative">
+              <div className="h-32 w-32 rounded-full border-2 border-slate-100 p-0.5 overflow-hidden shadow-inner bg-slate-50">
+                <div className="h-full w-full flex items-center justify-center opacity-20">
+                  <Camera className="h-10 w-10" />
+                </div>
+              </div>
+              <div className="absolute bottom-1 right-1 h-8 w-8 bg-green-500 rounded-full border-2 border-white flex items-center justify-center shadow-lg transform translate-x-1 translate-y-1">
+                <Check className="h-5 w-5 text-white" />
+              </div>
+            </div>
+            <div className="text-center">
+              <p className="text-[12px] font-bold text-slate-400 italic leading-none mb-1">CheckOut</p>
+              <p className="text-[12px] font-black text-rose-500 leading-none">
+                {attendanceData?.checkOutTime || '16:33:39 27/07'}
+              </p>
+            </div>
           </div>
         </div>
-        
-        <div className="p-6 pt-0 space-y-3">
-          <button onClick={onBack} className="w-full h-14 bg-green-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-green-100 active:translate-y-0.5 transition-all">Lưu xác nhận</button>
-          <button onClick={onBack} className="w-full h-12 border-2 border-slate-100 text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-widest active:bg-slate-50 transition-colors">Hủy bỏ</button>
+
+        {/* Action Buttons */}
+        <div className="pt-8 space-y-4">
+          <button 
+            onClick={onBack}
+            className="w-full h-14 bg-green-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-green-100 active:scale-95 transition-all"
+          >
+            Lưu và Hoàn tất
+          </button>
+          <button 
+            onClick={onBack}
+            className="w-full text-slate-300 text-[10px] font-black uppercase tracking-widest italic"
+          >
+            Hủy và chụp lại
+          </button>
         </div>
       </div>
     </motion.div>
